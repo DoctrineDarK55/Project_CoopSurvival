@@ -18,26 +18,34 @@ ASCharacter::ASCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	/*Creating the spring arm used to track the 3rd person character*/
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
 	SpringArmComp->bUsePawnControlRotation = true;
 	SpringArmComp->SetupAttachment(RootComponent);
 
-	GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
-
-	GetCapsuleComponent()->SetCollisionResponseToChannel(COLLISION_WEAPON, ECR_Ignore);
-
-	HealthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
-
+	/*Creating the camera to attach to the spring arm*/
 	CameraComp = CreateAbstractDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(SpringArmComp);
 
+	/*Enables the player to crouch*/
+	GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
+
+	/*Creating the capsule and set collision values*/
+	GetCapsuleComponent()->SetCollisionResponseToChannel(COLLISION_WEAPON, ECR_Ignore);
+
+	/*Health Component used to track player Health*/
+	HealthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
+
+	/*This sets the players field of view and also the speed at which the player zoonms in when aiming*/
 	ZoomedFOV = 65.0f;
 	ZoomInterpSpeed = 20.0f;
 
+	/*Links to Weapson Socket set in the editor. This will be set in the players right hand.*/
 	WeaponAttachSocketName = "WeaponSocket";
 }
 
 // Called when the game starts or when spawned
+/*When the game is started we will need to set the field of view, health, and weapons spawned for the player.*/
 void ASCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -107,6 +115,7 @@ void ASCharacter::StopFire()
 	}
 }
 
+/*This function is used to calculate the overall health of the player. The parameter arguments are standard for using this function in Unreal.*/
 void ASCharacter::OnHealthChanged(USHealthComponent* OwningHealthComp, float Health, float HealthDelta, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser)
 {
 	if (Health <= 0.0f && !bDied)
@@ -143,11 +152,13 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	/*Axis inputs used for player movement and camera control.*/
 	PlayerInputComponent->BindAxis("MoveForward", this, &ASCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ASCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("LookUp", this, &ASCharacter::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("Turn", this, &ASCharacter::AddControllerYawInput);
 
+	/*Bind actions used for player input. Jumping, aiming, etc.*/
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ASCharacter::BeginCrouch);
 	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &ASCharacter::EndCrouch);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
